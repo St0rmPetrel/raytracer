@@ -10,20 +10,14 @@ impl Ray {
         Ray { orig, dir }
     }
 
-    pub fn is_sphere_intersec(&self, center: Vector, radius: f32) -> bool {
-        let oc = &center - &self.orig;
-        let oc_dir = oc.dot(&self.dir);
+    pub fn get_orig(&self) -> &Vector {
+        &self.orig
+    }
+    pub fn get_dir(&self) -> &Vector {
+        &self.dir
+    }
 
-        if oc_dir <= 0.0 {
-            return false;
-        }
-
-        let h2 = oc.cross(&self.dir).dot2();
-
-        if h2 > radius * radius {
-            return false;
-        }
-
-        true
+    pub fn point_on_ray(&self, t: f32) -> Vector {
+        &(&self.dir * t) + &self.orig
     }
 }
