@@ -6,7 +6,6 @@ use std::{
 };
 
 pub mod color;
-pub mod save;
 
 pub struct RasterImage {
     name: String,
