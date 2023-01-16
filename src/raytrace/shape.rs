@@ -8,7 +8,7 @@ pub enum Intersec {
 }
 
 pub trait Shape {
-    fn intersec(&self, ray: &Ray) -> Intersec;
+    fn intersec(&self, ray: &Ray) -> Option<f32>;
     fn norm(&self, point: &Vector) -> Vector;
 }
 
@@ -25,27 +25,41 @@ pub fn new(center: Vector, radius: f32) -> impl Shape {
 }
 
 impl Shape for Sphere {
-    fn intersec(&self, ray: &Ray) -> Intersec {
+    fn intersec(&self, ray: &Ray) -> Option<f32> {
         let oc = &self.center - ray.get_orig();
         let oc_dir = oc.dot(ray.get_dir());
 
         if oc_dir <= 0.0 {
-            return Intersec::None;
+            return None;
         }
 
         let h2 = oc.cross(ray.get_dir()).dot2();
 
         let k = self.radius2 - h2;
         if k < 0.0 {
-            return Intersec::None;
+            return None;
         }
 
         if k == 0.0 {
-            return Intersec::OneRoot(oc_dir);
+            return Some(oc_dir);
         }
         let k = k.sqrt();
 
-        Intersec::TwoRoot(oc_dir - k, oc_dir + k)
+        let (x1, x2) = (oc_dir - k, oc_dir + k);
+
+        if x1 < 0.0 && x2 < 0.0 {
+            None
+        } else if x1 < 0.0 {
+            Some(x2)
+        } else if x2 < 0.0 {
+            Some(x1)
+        } else {
+            if x1 < x2 {
+                Some(x1)
+            } else {
+                Some(x2)
+            }
+        }
     }
 
     fn norm(&self, point: &Vector) -> Vector {

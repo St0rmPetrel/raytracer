@@ -1,4 +1,4 @@
-use color::Color;
+pub use color::Color;
 use core::str;
 use std::{
     fs::File,
