@@ -56,21 +56,41 @@ struct Intersection<'a> {
 
 impl Scene {
     fn intersec(&self, ray: &Ray) -> Option<Intersection> {
+        struct IntersecObj<'a> {
+            obj: &'a Object,
+            distance: f32,
+        }
+        let mut nearest_obj = None;
         for obj in self.objects.iter() {
             let distance = match obj.shape.intersec(ray) {
                 Some(distance) => distance,
                 None => continue,
             };
-            // TODO
-            let point = ray.point_on_ray(distance);
-            let properties = &obj.properties;
-            return Some(Intersection {
-                norm: obj.shape.norm(&point),
-                obj_properties: properties,
-                point,
-            });
+
+            nearest_obj = match nearest_obj {
+                None => Some(IntersecObj { obj, distance }),
+                Some(mut nearest_obj) => {
+                    if distance < nearest_obj.distance {
+                        nearest_obj.distance = distance;
+                        nearest_obj.obj = obj;
+                    }
+                    Some(nearest_obj)
+                }
+            };
         }
-        None
+
+        match nearest_obj {
+            None => None,
+            Some(obj) => {
+                let point = ray.point_on_ray(obj.distance);
+                let obj = obj.obj;
+                Some(Intersection {
+                    norm: obj.shape.norm(&point),
+                    obj_properties: &obj.properties,
+                    point,
+                })
+            }
+        }
     }
 
     fn illuminate(&self, intersec: Intersection) -> Color {
