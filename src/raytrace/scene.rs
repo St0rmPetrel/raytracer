@@ -3,7 +3,7 @@ use super::ray::Ray;
 use super::shape::Shape;
 use super::vector::Vector;
 
-use crate::image;
+use crate::image::Color;
 
 pub struct Object {
     shape: Box<dyn Shape>,
@@ -11,13 +11,7 @@ pub struct Object {
 }
 
 pub struct Properties {
-    pub color: image::Color,
-}
-
-pub struct Intersection<'a> {
-    pub point: Vector,
-    pub norm: Vector,
-    pub obj_properties: &'a Properties,
+    pub color: Color,
 }
 
 pub struct Scene {
@@ -33,7 +27,7 @@ impl Scene {
         }
     }
 
-    pub fn push_object<T: Shape + 'static>(&mut self, shape: T, color: image::Color) {
+    pub fn push_object<T: Shape + 'static>(&mut self, shape: T, color: Color) {
         let obj = Object {
             properties: Properties { color },
             shape: Box::new(shape),
@@ -45,7 +39,23 @@ impl Scene {
         self.lights.push(light)
     }
 
-    pub fn intersec(&self, ray: &Ray) -> Option<Intersection> {
+    pub fn get_ray_color(&self, ray: &Ray) -> Color {
+        let intersec = match self.intersec(ray) {
+            None => return Color::new(0, 0, 0),
+            Some(intersec) => intersec,
+        };
+        self.illuminate(intersec)
+    }
+}
+
+struct Intersection<'a> {
+    point: Vector,
+    norm: Vector,
+    obj_properties: &'a Properties,
+}
+
+impl Scene {
+    fn intersec(&self, ray: &Ray) -> Option<Intersection> {
         for obj in self.objects.iter() {
             let distance = match obj.shape.intersec(ray) {
                 Some(distance) => distance,
@@ -61,5 +71,18 @@ impl Scene {
             });
         }
         None
+    }
+
+    fn illuminate(&self, intersec: Intersection) -> Color {
+        let mut color = Color::new(0, 0, 0);
+        color.set(&intersec.obj_properties.color);
+
+        let mut intensity = 0.0;
+        for light in self.lights.iter() {
+            intensity +=
+                light.intensity(&intersec.point, &intersec.norm) / (self.lights.len() as f32);
+        }
+        color *= intensity;
+        color
     }
 }

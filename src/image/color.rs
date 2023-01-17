@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul};
+use std::ops::{Add, Mul, MulAssign};
 
 #[derive(Clone)]
 pub struct Color {
@@ -10,6 +10,12 @@ pub struct Color {
 impl Color {
     pub fn new(r: u8, g: u8, b: u8) -> Color {
         Color { r, g, b }
+    }
+
+    pub fn set(&mut self, color: &Color) {
+        self.r = color.r;
+        self.g = color.g;
+        self.b = color.b;
     }
 }
 
@@ -34,6 +40,14 @@ impl Mul<f32> for Color {
             g: mul_primary_color(self.g, rhs),
             b: mul_primary_color(self.b, rhs),
         }
+    }
+}
+
+impl MulAssign<f32> for Color {
+    fn mul_assign(&mut self, rhs: f32) {
+        self.r = mul_primary_color(self.r, rhs);
+        self.g = mul_primary_color(self.g, rhs);
+        self.b = mul_primary_color(self.b, rhs);
     }
 }
 
