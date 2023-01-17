@@ -19,11 +19,11 @@ impl Color {
     }
 }
 
-impl Add for Color {
-    type Output = Self;
+impl Add for &Color {
+    type Output = Color;
 
     fn add(self, rhs: Self) -> Self::Output {
-        Self {
+        Color {
             r: self.r / 2 + rhs.r / 2,
             g: self.g / 2 + rhs.g / 2,
             b: self.b / 2 + rhs.b / 2,
