@@ -1,0 +1,21 @@
+name = "test"
+width = 1280
+height = 720
+
+[[spheres]]
+center = [0.0, 3.0, 0.0]
+radius = 4.0
+color = [255, 0, 0]
+
+[[spheres]]
+center = [-3.0, -2.0, 0.0]
+radius = 4.0
+color = [0, 255, 0]
+
+[[spheres]]
+center = [3.0, -2.0, 0.0]
+radius = 4.0
+color = [0, 0, 255]
+
+[[lights]]
+center = [0.0, 0.0, 10.0]

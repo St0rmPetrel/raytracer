@@ -1,10 +1,27 @@
 pub mod canvas;
+pub mod config;
 pub mod image;
 pub mod ray;
 pub mod scene;
 pub mod vector;
 
-fn main() {
+use std::env;
+use std::process::ExitCode;
+
+fn help() {
+    println!("usage: raytracer <path_to_toml_config>")
+}
+
+fn main() -> ExitCode {
+    let args: Vec<String> = env::args().collect();
+    if args.len() < 2 {
+        help();
+        return ExitCode::FAILURE;
+    }
+
+    let cfg = config::Config::new(&args[1]);
+    println!("{:#?}", cfg);
+
     const RESOLUTION: usize = 1280 + 1;
 
     const HD_W: usize = 1280;
@@ -49,4 +66,6 @@ fn main() {
     }
 
     image.save_ppm().expect("can't save ruster image");
+
+    ExitCode::SUCCESS
 }
