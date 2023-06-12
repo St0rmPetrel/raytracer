@@ -1,3 +1,4 @@
+use crate::config::SceneConfig;
 use crate::image::Color;
 use crate::ray::Ray;
 use crate::vector::Vector;
@@ -23,22 +24,36 @@ pub struct Scene {
 }
 
 impl Scene {
-    pub fn new() -> Scene {
-        Scene {
+    pub fn new(cfg: &SceneConfig) -> Scene {
+        let mut scene = Scene {
             objects: Vec::new(),
             lights: Vec::new(),
+        };
+        // objects
+        for s in cfg.spheres.iter() {
+            let sphere = shape::new_sphere(Vector::new_from_arr(&s.center), s.radius);
+            let color = Color::new_from_arr(&s.color);
+
+            scene.push_object(sphere, color)
         }
+
+        // light
+        for l in cfg.lights.iter() {
+            let light = Light::new(Vector::new_from_arr(&l.center));
+            scene.push_light(light);
+        }
+
+        scene
     }
 
-    pub fn push_object<T: Shape + 'static>(&mut self, shape: T, color: Color) {
+    fn push_object<T: Shape + 'static>(&mut self, shape: T, color: Color) {
         let obj = Object {
             properties: Properties { color },
             shape: Box::new(shape),
         };
         self.objects.push(obj)
     }
-    pub fn push_light(&mut self, orig: Vector) {
-        let light = Light::new(orig);
+    fn push_light(&mut self, light: Light) {
         self.lights.push(light)
     }
 

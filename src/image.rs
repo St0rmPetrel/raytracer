@@ -1,3 +1,4 @@
+use crate::config::ImageConfig;
 pub use color::Color;
 use core::str;
 use std::{
@@ -15,12 +16,12 @@ pub struct RasterImage {
 }
 
 impl RasterImage {
-    pub fn new(name: &str, width: usize, height: usize) -> RasterImage {
+    pub fn new(cfg: &ImageConfig) -> RasterImage {
         RasterImage {
-            width,
-            height,
-            name: String::from(name),
-            pixels: vec![Color::new(0, 0, 0); width * height],
+            width: cfg.width,
+            height: cfg.height,
+            name: cfg.name.clone(),
+            pixels: vec![Color::new(0, 0, 0); cfg.width * cfg.height],
         }
     }
 

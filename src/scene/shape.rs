@@ -17,7 +17,7 @@ pub struct Sphere {
     radius2: f32,
 }
 
-pub fn new(center: Vector, radius: f32) -> impl Shape {
+pub fn new_sphere(center: Vector, radius: f32) -> impl Shape {
     Sphere {
         center,
         radius2: radius * radius,

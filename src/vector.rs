@@ -12,6 +12,14 @@ impl Vector {
         Vector { x, y, z }
     }
 
+    pub fn new_from_arr(xyz: &[f32; 3]) -> Vector {
+        Vector {
+            x: xyz[0],
+            y: xyz[1],
+            z: xyz[2],
+        }
+    }
+
     pub fn dot(&self, rhs: &Self) -> f32 {
         self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }

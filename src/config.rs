@@ -1,22 +1,29 @@
 use serde::Deserialize;
-use std::fs::read_to_string;
 use toml;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
-    pub name: String,
-    pub width: usize,
-    pub height: usize,
-    pub spheres: Vec<SphereConfig>,
-    pub lights: Vec<LightConfig>,
+    pub image: ImageConfig,
+    pub scene: SceneConfig,
 }
 
 impl Config {
-    pub fn new(path: &str) -> Config {
-        let toml_str = read_to_string(path).unwrap();
-        let conf: Config = toml::from_str(&toml_str).unwrap();
-        conf
+    pub fn parse(toml_str: &str) -> Result<Config, toml::de::Error> {
+        toml::from_str(toml_str)
     }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ImageConfig {
+    pub name: String,
+    pub width: usize,
+    pub height: usize,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SceneConfig {
+    pub spheres: Vec<SphereConfig>,
+    pub lights: Vec<LightConfig>,
 }
 
 #[derive(Debug, Deserialize)]

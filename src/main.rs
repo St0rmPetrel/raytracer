@@ -5,41 +5,41 @@ pub mod ray;
 pub mod scene;
 pub mod vector;
 
-use std::env;
 use std::process::ExitCode;
 
-fn help() {
-    println!("usage: raytracer <path_to_toml_config>")
-}
-
 fn main() -> ExitCode {
-    let args: Vec<String> = env::args().collect();
+    let args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
-        help();
+        println!("usage: raytracer <path_to_toml_config>");
         return ExitCode::FAILURE;
     }
 
-    let cfg = config::Config::new(&args[1]);
-    println!("{:#?}", cfg);
+    let config_path = &args[1];
+    let config_str = match std::fs::read_to_string(config_path) {
+        Ok(str) => str,
+        Err(err) => {
+            println!("fail to read file {}: {}", config_path, err.to_string());
+            return ExitCode::FAILURE;
+        }
+    };
+
+    let cfg = match config::Config::parse(&config_str) {
+        Ok(cfg) => cfg,
+        Err(err) => {
+            println!("fail to parse file {}: {}", config_path, err.message());
+            return ExitCode::FAILURE;
+        }
+    };
+
+    let mut image = image::RasterImage::new(&cfg.image);
+    let scene = scene::Scene::new(&cfg.scene);
 
     const RESOLUTION: usize = 1280 + 1;
 
     const HD_W: usize = 1280;
     const HD_H: usize = 720;
 
-    let mut image = image::RasterImage::new("test", HD_W, HD_H);
     let mut convas = canvas::Canvas::new(15.0, RESOLUTION);
-
-    let sphere_r = scene::shape::new(vector::Vector::new(0.0, 3.0, 0.0), 4.0);
-    let sphere_g = scene::shape::new(vector::Vector::new(-3.0, -2.0, 0.0), 4.0);
-    let sphere_b = scene::shape::new(vector::Vector::new(3.0, -2.0, 0.0), 4.0);
-
-    let mut scene = scene::Scene::new();
-    scene.push_object(sphere_r, image::color::Color::new(255, 0, 0));
-    scene.push_object(sphere_g, image::color::Color::new(0, 255, 0));
-    scene.push_object(sphere_b, image::color::Color::new(0, 0, 255));
-
-    scene.push_light(vector::Vector::new(0.0, 0.0, 10.0));
 
     convas.fill_canvas(scene, (0, 1281), (280, 1001));
 

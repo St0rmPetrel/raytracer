@@ -12,6 +12,14 @@ impl Color {
         Color { r, g, b }
     }
 
+    pub fn new_from_arr(rgb: &[u8; 3]) -> Color {
+        Color {
+            r: rgb[0],
+            g: rgb[1],
+            b: rgb[2],
+        }
+    }
+
     pub fn set(&mut self, color: &Color) {
         self.r = color.r;
         self.g = color.g;
