@@ -1,4 +1,4 @@
-use super::vector::Vector;
+use crate::vector::Vector;
 
 pub struct Ray {
     orig: Vector,

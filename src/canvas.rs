@@ -1,7 +1,7 @@
-use super::ray;
-use super::scene;
-use super::vector;
 use crate::image::Color;
+use crate::ray;
+use crate::scene;
+use crate::vector;
 
 struct Camera {
     orig: vector::Vector,

@@ -1,5 +1,5 @@
-use super::ray::Ray;
-use super::vector::Vector;
+use crate::ray::Ray;
+use crate::vector::Vector;
 
 pub enum Intersec {
     OneRoot(f32),

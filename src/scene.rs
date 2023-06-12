@@ -1,9 +1,12 @@
-use super::light::Light;
-use super::ray::Ray;
-use super::shape::Shape;
-use super::vector::Vector;
-
 use crate::image::Color;
+use crate::ray::Ray;
+use crate::vector::Vector;
+
+pub mod light;
+pub mod shape;
+
+use light::Light;
+use shape::Shape;
 
 pub struct Object {
     shape: Box<dyn Shape>,
