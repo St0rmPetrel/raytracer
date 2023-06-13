@@ -46,9 +46,11 @@ impl RasterImage {
         }
         Ok(())
     }
-
     pub fn get_pixel(&mut self, x: usize, y: usize) -> Option<&mut Color> {
         let index = self.width * y + x;
         self.pixels.get_mut(index)
+    }
+    pub fn get_resolution(&self) -> (usize, usize) {
+        (self.width, self.height)
     }
 }
