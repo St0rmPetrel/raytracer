@@ -1,12 +1,13 @@
 use crate::canvas::Canvas;
+use crate::config::CameraConfig;
 use crate::image::RasterImage;
 use crate::scene::Scene;
 
-pub fn fill_image(image: &mut RasterImage, scene: Scene) {
+pub fn fill_image(image: &mut RasterImage, camera: CameraConfig, scene: Scene) {
     let (width, height) = image.get_resolution();
     let resolution = std::cmp::max(width, height);
 
-    let mut convas = Canvas::new(15.0, resolution + 1);
+    let mut convas = Canvas::new(&camera, resolution + 1);
 
     let (h_shift, w_shift) = if height < width {
         ((resolution - height) / 2, 0)

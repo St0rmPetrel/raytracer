@@ -5,12 +5,20 @@ use toml;
 pub struct Config {
     pub image: ImageConfig,
     pub scene: SceneConfig,
+    pub camera: CameraConfig,
 }
 
 impl Config {
     pub fn parse(toml_str: &str) -> Result<Config, toml::de::Error> {
         toml::from_str(toml_str)
     }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CameraConfig {
+    pub origin: [f32; 3],
+    pub view: [f32; 3],
+    pub up: [f32; 3],
 }
 
 #[derive(Debug, Deserialize)]
@@ -35,5 +43,5 @@ pub struct SphereConfig {
 
 #[derive(Debug, Deserialize)]
 pub struct LightConfig {
-    pub center: [f32; 3],
+    pub origin: [f32; 3],
 }

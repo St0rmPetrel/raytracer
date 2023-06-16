@@ -35,7 +35,7 @@ fn main() -> ExitCode {
     let mut image = image::RasterImage::new(&cfg.image);
     let scene = scene::Scene::new(&cfg.scene);
 
-    raytracer::fill_image(&mut image, scene);
+    raytracer::fill_image(&mut image, cfg.camera, scene);
 
     match image.save_ppm() {
         Ok(_) => {

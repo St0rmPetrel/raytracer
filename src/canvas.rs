@@ -1,22 +1,31 @@
+use crate::config::CameraConfig;
 use crate::image::Color;
 use crate::ray;
 use crate::scene;
-use crate::vector;
+use crate::vector::Vector;
 
 struct Camera {
-    orig: vector::Vector,
-    view: vector::Vector,
-    tau: vector::Vector,
-    up: vector::Vector,
+    orig: Vector,
+    view: Vector,
+    tau: Vector,
+    up: Vector,
 }
 
 impl Camera {
-    fn new(distance: f32) -> Camera {
+    fn new(conf: &CameraConfig) -> Camera {
+        let mut view = Vector::new_from_arr(&conf.view);
+        view.norm();
+        let mut up = Vector::new_from_arr(&conf.up);
+        up.norm();
+        let mut tau = view.cross(&up);
+        tau.norm();
+        let mut up = tau.cross(&view);
+        up.norm();
         Camera {
-            orig: vector::Vector::new(0.0, 0.0, distance),
-            view: vector::Vector::new(0.0, 0.0, -1.0),
-            tau: vector::Vector::new(1.0, 0.0, 0.0),
-            up: vector::Vector::new(0.0, 1.0, 0.0),
+            orig: Vector::new_from_arr(&conf.origin),
+            view,
+            tau,
+            up,
         }
     }
 }
@@ -29,14 +38,15 @@ pub struct Canvas {
 }
 
 impl Canvas {
-    pub fn new(distance: f32, resolution: usize) -> Canvas {
+    pub fn new(conf: &CameraConfig, resolution: usize) -> Canvas {
         Canvas {
-            camera: Camera::new(distance),
+            camera: Camera::new(conf),
             resolution,
             step: 1.0 / resolution as f32,
             canvas: vec![Color::new(0, 0, 0); resolution * resolution],
         }
     }
+
     pub fn get_canvas_pixel(&self, i: usize, j: usize) -> Option<&Color> {
         let index = self.resolution * j + i;
         self.canvas.get(index)

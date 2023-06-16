@@ -39,7 +39,7 @@ impl Scene {
 
         // light
         for l in cfg.lights.iter() {
-            let light = Light::new(Vector::new_from_arr(&l.center));
+            let light = Light::new(Vector::new_from_arr(&l.origin));
             scene.push_light(light);
         }
 

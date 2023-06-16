@@ -3,6 +3,11 @@ name = "test"
 width = 1280
 height = 720
 
+[camera]
+origin = [2.0, 4.0, 20.0]
+view = [-0.1, -0.2, -1.0]
+up = [0.0, 1.0, 0.0]
+
 [[scene.spheres]]
 center = [0.0, 3.0, 0.0]
 radius = 4.0
@@ -19,4 +24,4 @@ radius = 4.0
 color = [0, 0, 255]
 
 [[scene.lights]]
-center = [0.0, 0.0, 10.0]
+origin = [0.0, 0.0, 10.0]
