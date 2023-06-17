@@ -13,14 +13,10 @@ struct Camera {
 
 impl Camera {
     fn new(conf: &CameraConfig) -> Camera {
-        let mut view = Vector::new_from_arr(&conf.view);
-        view.norm();
-        let mut up = Vector::new_from_arr(&conf.up);
-        up.norm();
-        let mut tau = view.cross(&up);
-        tau.norm();
-        let mut up = tau.cross(&view);
-        up.norm();
+        let view = Vector::new_from_arr(&conf.view).norm();
+        let up = Vector::new_from_arr(&conf.up).norm();
+        let tau = view.cross(&up).norm();
+        let up = tau.cross(&view).norm();
         Camera {
             orig: Vector::new_from_arr(&conf.origin),
             view,
@@ -84,8 +80,6 @@ impl Canvas {
         dir += &self.camera.tau * h_shift;
         dir += &self.camera.up * v_shift;
 
-        dir.norm();
-
-        ray::Ray::new(self.camera.orig.clone(), dir)
+        ray::Ray::new(self.camera.orig.clone(), dir.norm())
     }
 }

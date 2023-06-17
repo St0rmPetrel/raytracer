@@ -10,8 +10,7 @@ impl Light {
     }
 
     pub fn intensity(&self, intersec_point: &Vector, norm: &Vector) -> f32 {
-        let mut l = &self.orig - intersec_point;
-        l.norm();
+        let l = (&self.orig - intersec_point).norm();
 
         let intensity = l.dot(norm);
 

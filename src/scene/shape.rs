@@ -63,9 +63,6 @@ impl Shape for Sphere {
     }
 
     fn norm(&self, point: &Vector) -> Vector {
-        let mut norm = point - &self.center;
-        norm.norm();
-
-        norm
+        (point - &self.center).norm()
     }
 }

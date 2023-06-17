@@ -40,11 +40,12 @@ impl Vector {
         self.dot(self).sqrt()
     }
 
-    pub fn norm(&mut self) {
+    pub fn norm(mut self) -> Vector {
         let size = self.size();
         self.x = self.x / size;
         self.y = self.y / size;
         self.z = self.z / size;
+        self
     }
 }
 
