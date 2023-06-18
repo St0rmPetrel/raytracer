@@ -80,8 +80,8 @@ impl Scene {
         }
         let mut nearest_obj = None;
         for obj in self.objects.iter() {
-            let distance = match obj.shape.intersec(ray) {
-                Some(distance) => distance,
+            let distance = match obj.shape.intersec(ray).get_closer() {
+                Some(d) => d,
                 None => continue,
             };
 

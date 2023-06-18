@@ -1,5 +1,6 @@
 use crate::raytracer::vector::Vector;
 
+#[derive(Debug)]
 pub struct Light {
     orig: Vector,
 }

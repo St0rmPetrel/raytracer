@@ -2,8 +2,31 @@ use crate::raytracer::ray::Ray;
 use crate::raytracer::vector::Vector;
 
 pub trait Shape {
-    fn intersec(&self, ray: &Ray) -> Option<f32>;
+    fn intersec(&self, ray: &Ray) -> Intersec;
     fn norm(&self, point: &Vector) -> Vector;
+}
+
+#[derive(Debug)]
+pub enum Intersec {
+    One(f32),
+    Two(f32, f32),
+    None,
+}
+
+impl Intersec {
+    pub fn get_closer(self) -> Option<f32> {
+        match self {
+            Self::None => None,
+            Self::One(d) => Some(d),
+            Self::Two(d1, d2) => {
+                if d1 > 0.0 && d2 > 0.0 {
+                    Some(f32::min(d1, d2))
+                } else {
+                    None
+                }
+            }
+        }
+    }
 }
 
 pub struct Sphere {
@@ -19,41 +42,27 @@ pub fn new_sphere(center: Vector, radius: f32) -> impl Shape {
 }
 
 impl Shape for Sphere {
-    fn intersec(&self, ray: &Ray) -> Option<f32> {
+    fn intersec(&self, ray: &Ray) -> Intersec {
         let oc = &self.center - ray.get_orig();
         let oc_dir = oc.dot(ray.get_dir());
 
         if oc_dir <= 0.0 {
-            return None;
+            return Intersec::None;
         }
 
         let h2 = oc.cross(ray.get_dir()).dot2();
 
         let k = self.radius2 - h2;
         if k < 0.0 {
-            return None;
+            return Intersec::None;
         }
 
         if k == 0.0 {
-            return Some(oc_dir);
+            return Intersec::One(oc_dir);
         }
         let k = k.sqrt();
 
-        let (x1, x2) = (oc_dir - k, oc_dir + k);
-
-        if x1 < 0.0 && x2 < 0.0 {
-            None
-        } else if x1 < 0.0 {
-            Some(x2)
-        } else if x2 < 0.0 {
-            Some(x1)
-        } else {
-            if x1 < x2 {
-                Some(x1)
-            } else {
-                Some(x2)
-            }
-        }
+        Intersec::Two(oc_dir - k, oc_dir + k)
     }
 
     fn norm(&self, point: &Vector) -> Vector {
