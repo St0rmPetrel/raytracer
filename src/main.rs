@@ -1,10 +1,6 @@
-pub mod canvas;
 pub mod config;
 pub mod image;
-pub mod ray;
 pub mod raytracer;
-pub mod scene;
-pub mod vector;
 
 use std::process::ExitCode;
 
@@ -33,9 +29,8 @@ fn main() -> ExitCode {
     };
 
     let mut image = image::RasterImage::new(&cfg.image);
-    let scene = scene::Scene::new(&cfg.scene);
 
-    raytracer::fill_image(&mut image, cfg.camera, scene);
+    raytracer::Raytracer::new(&cfg.camera, &cfg.scene).fill_image(&mut image);
 
     match image.save_ppm() {
         Ok(_) => {

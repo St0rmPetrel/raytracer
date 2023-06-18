@@ -1,11 +1,5 @@
-use crate::ray::Ray;
-use crate::vector::Vector;
-
-pub enum Intersec {
-    OneRoot(f32),
-    TwoRoot(f32, f32),
-    None,
-}
+use crate::raytracer::ray::Ray;
+use crate::raytracer::vector::Vector;
 
 pub trait Shape {
     fn intersec(&self, ray: &Ray) -> Option<f32>;

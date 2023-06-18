@@ -1,10 +1,10 @@
 use crate::config::SceneConfig;
 use crate::image::Color;
-use crate::ray::Ray;
-use crate::vector::Vector;
+use crate::raytracer::ray::Ray;
+use crate::raytracer::vector::Vector;
 
-pub mod light;
-pub mod shape;
+mod light;
+mod shape;
 
 use light::Light;
 use shape::Shape;

@@ -1,10 +1,10 @@
 use crate::config::CameraConfig;
 use crate::image::Color;
-use crate::ray;
-use crate::scene;
-use crate::vector::Vector;
+use crate::raytracer::ray;
+use crate::raytracer::scene;
+use crate::raytracer::vector::Vector;
 
-struct Camera {
+pub struct Camera {
     orig: Vector,
     view: Vector,
     tau: Vector,
@@ -12,7 +12,7 @@ struct Camera {
 }
 
 impl Camera {
-    fn new(conf: &CameraConfig) -> Camera {
+    pub fn new(conf: &CameraConfig) -> Camera {
         let view = Vector::new_from_arr(&conf.view).norm();
         let up = Vector::new_from_arr(&conf.up).norm();
         let tau = view.cross(&up).norm();
@@ -26,17 +26,17 @@ impl Camera {
     }
 }
 
-pub struct Canvas {
-    camera: Camera,
+pub struct Canvas<'a> {
+    camera: &'a Camera,
     step: f32,
     resolution: usize,
     canvas: Vec<Color>,
 }
 
-impl Canvas {
-    pub fn new(conf: &CameraConfig, resolution: usize) -> Canvas {
+impl<'a> Canvas<'a> {
+    pub fn new(camera: &'a Camera, resolution: usize) -> Canvas {
         Canvas {
-            camera: Camera::new(conf),
+            camera,
             resolution,
             step: 1.0 / resolution as f32,
             canvas: vec![Color::new(0, 0, 0); resolution * resolution],
@@ -50,7 +50,7 @@ impl Canvas {
 
     pub fn fill_canvas(
         &mut self,
-        scene: scene::Scene,
+        scene: &scene::Scene,
         i_bound: (usize, usize),
         j_bound: (usize, usize),
     ) {

@@ -1,4 +1,4 @@
-use crate::vector::Vector;
+use crate::raytracer::vector::Vector;
 
 pub struct Ray {
     orig: Vector,
