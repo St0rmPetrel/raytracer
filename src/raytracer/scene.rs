@@ -16,6 +16,7 @@ pub struct Object {
 
 pub struct Properties {
     pub color: Color,
+    pub diffuse: Option<f32>,
 }
 
 pub struct Scene {
@@ -32,9 +33,12 @@ impl Scene {
         // objects
         for s in cfg.spheres.iter() {
             let sphere = shape::new_sphere(Vector::new_from_arr(&s.center), s.radius);
-            let color = Color::new_from_arr(&s.color);
+            let prop = Properties {
+                color: Color::new_from_arr(&s.color),
+                diffuse: s.diffuse,
+            };
 
-            scene.push_object(sphere, color)
+            scene.push_object(sphere, prop)
         }
 
         // light
@@ -46,9 +50,9 @@ impl Scene {
         scene
     }
 
-    fn push_object<T: Shape + 'static>(&mut self, shape: T, color: Color) {
+    fn push_object<T: Shape + 'static>(&mut self, shape: T, properties: Properties) {
         let obj = Object {
-            properties: Properties { color },
+            properties,
             shape: Box::new(shape),
         };
         self.objects.push(obj)
@@ -115,10 +119,14 @@ impl Scene {
         let mut color = Color::new(0, 0, 0);
         color.set(&intersec.obj_properties.color);
 
+        let norm = match intersec.obj_properties.diffuse {
+            None => intersec.norm,
+            Some(diff) => (&intersec.norm + &(&Vector::new_rand() * diff)).norm(),
+        };
+
         let mut intensity = 0.0;
         for light in self.lights.iter() {
-            intensity +=
-                light.intensity(&intersec.point, &intersec.norm) / (self.lights.len() as f32);
+            intensity += light.intensity(&intersec.point, &norm) / (self.lights.len() as f32);
         }
         color *= intensity;
         color

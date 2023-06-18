@@ -1,3 +1,4 @@
+use rand;
 use std::ops::{Add, AddAssign, Div, Mul, Sub};
 
 #[derive(Clone, Debug)]
@@ -10,6 +11,16 @@ pub struct Vector {
 impl Vector {
     pub fn new(x: f32, y: f32, z: f32) -> Vector {
         Vector { x, y, z }
+    }
+
+    pub fn new_rand() -> Vector {
+        &(Vector {
+            x: rand::random(),
+            y: rand::random(),
+            z: rand::random(),
+        }
+        .norm())
+            * rand::random()
     }
 
     pub fn new_from_arr(xyz: &[f32; 3]) -> Vector {
