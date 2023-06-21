@@ -77,8 +77,8 @@ impl<'a> Canvas<'a> {
         let h_shift = -0.5 + (i as f32 * self.step + self.step * 0.5);
         let v_shift = 0.5 - (j as f32 * self.step + self.step * 0.5);
 
-        dir += &self.camera.tau * h_shift;
-        dir += &self.camera.up * v_shift;
+        dir += &(&self.camera.tau * h_shift);
+        dir += &(&self.camera.up * v_shift);
 
         ray::Ray::new(self.camera.orig.clone(), dir.norm())
     }
