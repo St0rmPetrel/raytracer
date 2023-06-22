@@ -57,7 +57,7 @@ impl<'a> Canvas<'a> {
         for j in j_bound.0..j_bound.1 {
             for i in i_bound.0..i_bound.1 {
                 let ray = self.get_ray(i, j);
-                let ray_color = scene.get_ray_color(&ray);
+                let ray_color = scene.get_ray_color(&ray, 0);
                 let pixel = match self.get_canvas_pixel_mut(i, j) {
                     Some(pixel) => pixel,
                     None => continue,

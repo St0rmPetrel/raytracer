@@ -17,6 +17,7 @@ pub struct Object {
 pub struct Properties {
     pub color: Color,
     pub diffuse: Option<f32>,
+    pub reflection: Option<f32>,
 }
 
 pub struct Scene {
@@ -36,6 +37,7 @@ impl Scene {
             let prop = Properties {
                 color: Color::new_from_arr(&s.color),
                 diffuse: s.diffuse,
+                reflection: s.reflection,
             };
 
             scene.push_object(sphere, prop)
@@ -61,12 +63,45 @@ impl Scene {
         self.lights.push(light)
     }
 
-    pub fn get_ray_color(&self, ray: &Ray) -> Color {
+    const REFLECT_DEEP: u8 = 5;
+    const STEP_FROM_SHAPE: f32 = 0.0001;
+
+    pub fn get_ray_color(&self, ray: &Ray, deep: u8) -> Color {
         let intersec = match self.intersec(ray) {
             None => return Color::new(0, 0, 0),
             Some(intersec) => intersec,
         };
-        self.illuminate(intersec)
+
+        let norm = match intersec.obj_properties.diffuse {
+            None => intersec.norm,
+            Some(diff) => (&intersec.norm + &(&Vector::new_rand() * diff)).norm(),
+        };
+
+        let intensity: f32 = self
+            .lights
+            .iter()
+            .map(|l| l.intensity(&intersec.point, &norm) / (self.lights.len() as f32))
+            .sum();
+
+        let color = intensity * intersec.obj_properties.color.clone();
+
+        match intersec.obj_properties.reflection {
+            None => color,
+            Some(_) => {
+                if deep >= Self::REFLECT_DEEP {
+                    return color;
+                }
+
+                let point = &intersec.point + &(Self::STEP_FROM_SHAPE * &norm);
+                let rfl_ray = match ray.new_reflect(&point, &norm) {
+                    None => return color,
+                    Some(r) => r,
+                };
+                // TODO better model of reflection
+                //&((1.0 - rfl) * color) + &(rfl * self.get_ray_color(&rfl_ray, deep + 1))
+                &color + &self.get_ray_color(&rfl_ray, deep + 1)
+            }
+        }
     }
 }
 
@@ -113,22 +148,5 @@ impl Scene {
                 })
             }
         }
-    }
-
-    fn illuminate(&self, intersec: Intersection) -> Color {
-        let mut color = Color::new(0, 0, 0);
-        color.set(&intersec.obj_properties.color);
-
-        let norm = match intersec.obj_properties.diffuse {
-            None => intersec.norm,
-            Some(diff) => (&intersec.norm + &(&Vector::new_rand() * diff)).norm(),
-        };
-
-        let mut intensity = 0.0;
-        for light in self.lights.iter() {
-            intensity += light.intensity(&intersec.point, &norm) / (self.lights.len() as f32);
-        }
-        color *= intensity;
-        color
     }
 }

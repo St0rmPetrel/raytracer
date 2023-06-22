@@ -40,6 +40,7 @@ pub struct SphereConfig {
     pub radius: f32,
     pub color: [u8; 3],
     pub diffuse: Option<f32>,
+    pub reflection: Option<f32>,
 }
 
 #[derive(Debug, Deserialize)]

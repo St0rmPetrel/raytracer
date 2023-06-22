@@ -10,6 +10,17 @@ impl Ray {
         Ray { orig, dir }
     }
 
+    pub fn new_reflect(&self, p: &Vector, n: &Vector) -> Option<Ray> {
+        let d = match self.get_dir().reflect(n) {
+            None => return None,
+            Some(d) => d,
+        };
+        Some(Ray {
+            orig: p.clone(),
+            dir: d,
+        })
+    }
+
     pub fn get_orig(&self) -> &Vector {
         &self.orig
     }

@@ -59,6 +59,17 @@ pub mod color {
             }
         }
     }
+    impl Mul<Color> for f32 {
+        type Output = Color;
+
+        fn mul(self, rhs: Color) -> Self::Output {
+            Color {
+                r: mul_primary_color(rhs.r, self),
+                g: mul_primary_color(rhs.g, self),
+                b: mul_primary_color(rhs.b, self),
+            }
+        }
+    }
 
     impl MulAssign<f32> for Color {
         fn mul_assign(&mut self, rhs: f32) {

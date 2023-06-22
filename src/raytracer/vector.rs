@@ -2,7 +2,7 @@ use rand;
 use std::ops::{Add, AddAssign, Mul, Sub};
 
 /// Vector in 3 dimension Euclidean space.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Vector {
     x: f32,
     y: f32,
@@ -107,10 +107,22 @@ impl Vector {
     /// Normalize Vector (change size of Vector to make it's size = 1.0)
     pub fn norm(mut self) -> Vector {
         let size = self.size();
-        self.x = self.x / size;
-        self.y = self.y / size;
-        self.z = self.z / size;
+        self.x /= size;
+        self.y /= size;
+        self.z /= size;
         self
+    }
+
+    /// Assumed that n.size() == 1.0
+    pub fn reflect(&self, n: &Vector) -> Option<Vector> {
+        let dot = self.dot(n);
+        if dot >= 0.0 {
+            return None;
+        }
+        let n = (-2.0 * dot) * n;
+        let r = self.clone() + &n;
+
+        Some(r)
     }
 }
 
@@ -123,6 +135,17 @@ impl Add for &Vector {
             y: self.y + rhs.y,
             z: self.z + rhs.z,
         }
+    }
+}
+
+impl Add<&Vector> for Vector {
+    type Output = Vector;
+
+    fn add(mut self, rhs: &Vector) -> Self::Output {
+        self.x += rhs.x;
+        self.y += rhs.y;
+        self.z += rhs.z;
+        self
     }
 }
 
@@ -191,5 +214,19 @@ impl Mul<Vector> for f32 {
         let _ = rhs.y * self;
         let _ = rhs.z * self;
         rhs
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::raytracer::vector::Vector;
+
+    #[test]
+    fn reflect_positive_1() {
+        let v = Vector::new(1.0, -1.0, 0.0);
+        let n = Vector::new(0.0, 1.0, 0.0);
+
+        let r = v.reflect(&n).unwrap();
+        assert_eq!(r, Vector::new(1.0, 1.0, 0.0));
     }
 }
