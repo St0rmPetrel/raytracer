@@ -1,4 +1,4 @@
-use crate::config::SceneConfig;
+use crate::config::{ObjProperties, SceneConfig};
 use crate::image::Color;
 use crate::raytracer::ray::Ray;
 use crate::raytracer::vector::Vector;
@@ -20,6 +20,16 @@ pub struct Properties {
     pub reflection: Option<f32>,
 }
 
+impl Properties {
+    fn new(cfg: &ObjProperties) -> Properties {
+        Properties {
+            color: Color::new_from_arr(&cfg.color),
+            diffuse: cfg.diffuse,
+            reflection: cfg.reflection,
+        }
+    }
+}
+
 pub struct Scene {
     objects: Vec<Object>,
     lights: Vec<Light>,
@@ -34,11 +44,7 @@ impl Scene {
         // objects
         for s in cfg.spheres.iter() {
             let sphere = shape::new_sphere(Vector::new_from_arr(&s.center), s.radius);
-            let prop = Properties {
-                color: Color::new_from_arr(&s.color),
-                diffuse: s.diffuse,
-                reflection: s.reflection,
-            };
+            let prop = Properties::new(&s.properies);
 
             scene.push_object(sphere, prop)
         }

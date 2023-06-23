@@ -38,6 +38,11 @@ pub struct SceneConfig {
 pub struct SphereConfig {
     pub center: [f32; 3],
     pub radius: f32,
+    pub properies: ObjProperties,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ObjProperties {
     pub color: [u8; 3],
     pub diffuse: Option<f32>,
     pub reflection: Option<f32>,
