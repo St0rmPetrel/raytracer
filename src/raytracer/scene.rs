@@ -36,7 +36,7 @@ pub struct Scene {
 }
 
 impl Scene {
-    pub fn new(cfg: &SceneConfig) -> Scene {
+    pub fn new(cfg: SceneConfig) -> Scene {
         let mut scene = Scene {
             objects: Vec::new(),
             lights: Vec::new(),
@@ -44,7 +44,7 @@ impl Scene {
         // objects
         for s in cfg.spheres.iter() {
             let sphere = shape::new_sphere(Vector::new_from_arr(&s.center), s.radius);
-            let prop = Properties::new(&s.properies);
+            let prop = Properties::new(&s.properties);
 
             scene.push_object(sphere, prop)
         }

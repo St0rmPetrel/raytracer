@@ -1,5 +1,5 @@
 [image]
-name = "test"
+name = "reflect"
 width = 1280
 height = 720
 
@@ -14,17 +14,20 @@ origin = [0.0, 0.0, 5.0]
 [[scene.spheres]]
 center = [0.0, 3.0, 0.0]
 radius = 2.0
-color = [255, 100, 100]
-reflection = 0.5
+  [scene.spheres.properties]
+  color = [255, 100, 100]
+  reflection = 0.5
 
 [[scene.spheres]]
 center = [-3.0, -2.0, 0.0]
 radius = 2.0
-color = [100, 255, 100]
-reflection = 0.5
+  [scene.spheres.properties]
+  color = [100, 255, 100]
+  reflection = 0.5
 
 [[scene.spheres]]
 center = [3.0, -2.0, 0.0]
 radius = 2.0
-color = [100, 100, 255]
-reflection = 0.5
+  [scene.spheres.properties]
+  color = [100, 100, 255]
+  reflection = 0.5

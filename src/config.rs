@@ -9,8 +9,8 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn parse(toml_str: &str) -> Result<Config, toml::de::Error> {
-        toml::from_str(toml_str)
+    pub fn parse(toml_str: String) -> Result<Config, toml::de::Error> {
+        toml::from_str(&toml_str)
     }
 }
 
@@ -38,7 +38,7 @@ pub struct SceneConfig {
 pub struct SphereConfig {
     pub center: [f32; 3],
     pub radius: f32,
-    pub properies: ObjProperties,
+    pub properties: ObjProperties,
 }
 
 #[derive(Debug, Deserialize)]

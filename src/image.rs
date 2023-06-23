@@ -112,7 +112,7 @@ pub struct RasterImage {
 }
 
 impl RasterImage {
-    pub fn new(cfg: &ImageConfig) -> RasterImage {
+    pub fn new(cfg: ImageConfig) -> RasterImage {
         RasterImage {
             width: cfg.width,
             height: cfg.height,

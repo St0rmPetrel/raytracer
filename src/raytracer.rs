@@ -17,17 +17,17 @@ pub struct Raytracer {
 }
 
 impl Raytracer {
-    pub fn new(camera: &CameraConfig, scene: &SceneConfig) -> Raytracer {
+    pub fn new(camera: CameraConfig, scene: SceneConfig) -> Raytracer {
         Raytracer {
             camera: Camera::new(camera),
             scene: Scene::new(scene),
         }
     }
 
-    pub fn fill_image(&self, image: &mut RasterImage) {
+    pub fn fill_image(self, image: &mut RasterImage) {
         let (width, height) = image.get_resolution();
         let resolution = std::cmp::max(width, height);
-        let mut convas = Canvas::new(&self.camera, resolution + 1);
+        let mut convas = Canvas::new(self.camera, self.scene, resolution + 1);
 
         let (h_shift, w_shift) = if height < width {
             ((resolution - height) / 2, 0)
@@ -35,8 +35,8 @@ impl Raytracer {
             (0, (resolution - width) / 2)
         };
 
+        // TODO make parallel
         convas.fill_canvas(
-            &self.scene,
             (w_shift, resolution - w_shift + 1),
             (h_shift, resolution - h_shift + 1),
         );

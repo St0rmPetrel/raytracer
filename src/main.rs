@@ -20,7 +20,7 @@ fn main() -> ExitCode {
         }
     };
 
-    let cfg = match config::Config::parse(&config_str) {
+    let cfg = match config::Config::parse(config_str) {
         Ok(cfg) => cfg,
         Err(err) => {
             println!("fail to parse file {}: {}", config_path, err.message());
@@ -28,9 +28,9 @@ fn main() -> ExitCode {
         }
     };
 
-    let mut image = image::RasterImage::new(&cfg.image);
+    let mut image = image::RasterImage::new(cfg.image);
 
-    raytracer::Raytracer::new(&cfg.camera, &cfg.scene).fill_image(&mut image);
+    raytracer::Raytracer::new(cfg.camera, cfg.scene).fill_image(&mut image);
 
     match image.save_ppm() {
         Ok(_) => {
