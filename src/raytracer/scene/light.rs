@@ -15,9 +15,13 @@ impl Light {
 
         let intensity = l.dot(norm);
 
-        if intensity < 0.0 {
+        if intensity <= 0.0 {
             return 0.0;
         }
         intensity
+    }
+
+    pub fn get_orig(&self) -> &Vector {
+        &self.orig
     }
 }

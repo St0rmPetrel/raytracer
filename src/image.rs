@@ -36,14 +36,23 @@ pub mod color {
         }
     }
 
+    fn add_u8(a: u8, b: u8) -> u8 {
+        let s = ((a as f32).powi(2) + (b as f32).powi(2)).sqrt() as u16;
+        if s > u8::MAX as u16 {
+            u8::MAX
+        } else {
+            s as u8
+        }
+    }
+
     impl Add for &Color {
         type Output = Color;
 
         fn add(self, rhs: Self) -> Self::Output {
             Color {
-                r: self.r / 2 + rhs.r / 2,
-                g: self.g / 2 + rhs.g / 2,
-                b: self.b / 2 + rhs.b / 2,
+                r: add_u8(self.r, rhs.r),
+                g: add_u8(self.g, rhs.g),
+                b: add_u8(self.b, rhs.b),
             }
         }
     }

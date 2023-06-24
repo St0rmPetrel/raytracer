@@ -1,7 +1,7 @@
 use crate::config::CameraConfig;
 use crate::image::Color;
-use crate::raytracer::ray;
-use crate::raytracer::scene;
+use crate::raytracer::ray::Ray;
+use crate::raytracer::scene::Scene;
 use crate::raytracer::vector::Vector;
 
 pub struct Camera {
@@ -28,14 +28,14 @@ impl Camera {
 
 pub struct Canvas {
     camera: Camera,
-    scene: scene::Scene,
+    scene: Scene,
     step: f32,
     resolution: usize,
     canvas: Vec<Color>,
 }
 
 impl Canvas {
-    pub fn new(camera: Camera, scene: scene::Scene, resolution: usize) -> Canvas {
+    pub fn new(camera: Camera, scene: Scene, resolution: usize) -> Canvas {
         Canvas {
             camera,
             scene,
@@ -69,7 +69,7 @@ impl Canvas {
         self.canvas.get_mut(index)
     }
 
-    fn get_ray(&self, i: usize, j: usize) -> ray::Ray {
+    fn get_ray(&self, i: usize, j: usize) -> Ray {
         let mut dir = self.camera.view.clone();
         let h_shift = -0.5 + (i as f32 * self.step + self.step * 0.5);
         let v_shift = 0.5 - (j as f32 * self.step + self.step * 0.5);
@@ -77,6 +77,6 @@ impl Canvas {
         dir += &(&self.camera.tau * h_shift);
         dir += &(&self.camera.up * v_shift);
 
-        ray::Ray::new(self.camera.orig.clone(), dir.norm())
+        Ray::new(self.camera.orig.clone(), dir.norm())
     }
 }
