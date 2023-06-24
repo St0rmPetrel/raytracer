@@ -34,8 +34,13 @@ pub mod color {
             self.g = color.g;
             self.b = color.b;
         }
+
+        pub fn add_refl(self, rfl: f32, rht: Color) -> Color {
+            &self + &(rfl * rht)
+        }
     }
 
+    // TODO make better
     fn add_u8(a: u8, b: u8) -> u8 {
         let s = ((a as f32).powi(2) + (b as f32).powi(2)).sqrt() as u16;
         if s > u8::MAX as u16 {
