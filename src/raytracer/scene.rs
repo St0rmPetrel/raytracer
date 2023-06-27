@@ -106,13 +106,6 @@ impl Scene {
         distance <= pl_size
     }
 
-    fn is_light(ray: &Ray, l: &Light) -> bool {
-        let ol_dir = (l.get_orig() - ray.get_orig()).norm();
-        let dot = ol_dir.dot(ray.get_dir());
-
-        dot > (1.0 - Self::STEP_FROM_SHAPE)
-    }
-
     fn get_ray_color_by_light(&self, ray: &Ray, l: &Light, deep: u8) -> Color {
         let intersec = match self.intersec(ray) {
             None => return Color::new(0, 0, 0),
@@ -136,10 +129,6 @@ impl Scene {
         // shadow
         if self.is_shadow(l, &intersec.point, &norm) {
             return rfl_handler(Color::new(0, 0, 0));
-        }
-        // make light visible
-        if Self::is_light(ray, l) {
-            return Color::new(255, 255, 255);
         }
 
         let dist_from_l = (&intersec.point - l.get_orig()).size();
