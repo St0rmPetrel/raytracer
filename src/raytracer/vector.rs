@@ -124,6 +124,29 @@ impl Vector {
 
         Some(r)
     }
+
+    /// Step away from point (Vector) along the normal need for
+    /// case in which shadow ray or reflection ray may intersect self object (the object from which
+    /// it was created). So the origin (point) of new ray (reflection, shadow or other) created
+    /// a little step away from real object intersection origin.
+    ///
+    /// # Example
+    /// ```rust
+    /// // ray = Ray::new(orig, dir)
+    /// let ray = Ray::new(Vector::new(0, 0, 0), Vector::new(0, 0, 1));
+    /// let sphere_intersec_point = Vector::new(0, 0, 1);
+    /// let sphere_intersec_norm = Vector::new(0, 1, 0);
+    ///
+    /// // origin of refl_ray is step away from sphere to don't intersect that sphere
+    /// let refl_ray = Ray::new(
+    ///     sphere_intersec_point.step_away(&sphere_intersec_norm),
+    ///     ray.dir,
+    /// );
+    /// ```
+    pub fn step_away(&self, n: &Vector) -> Vector {
+        const STEP_FROM_ORIGIN: f32 = 100.0 * f32::EPSILON;
+        self + &(STEP_FROM_ORIGIN * n)
+    }
 }
 
 impl Add for &Vector {

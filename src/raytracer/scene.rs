@@ -70,7 +70,6 @@ impl Scene {
     }
 
     const REFLECT_DEEP: u8 = 5;
-    const STEP_FROM_SHAPE: f32 = 100.0 * f32::EPSILON;
 
     pub fn get_ray_color(&self, ray: &Ray, deep: u8) -> Color {
         let mut c = Color::new(0, 0, 0);
@@ -86,17 +85,14 @@ impl Scene {
             return None;
         }
 
-        // TODO make method step away
-        let p = p + &(Self::STEP_FROM_SHAPE * n);
-        ray.new_reflect(&p, n)
+        ray.new_reflect(&p.step_away(&n), n)
     }
 
     fn is_shadow(&self, l: &Light, p: &Vector, n: &Vector) -> bool {
         let pl = l.get_orig() - p;
         let pl_size = pl.size();
 
-        let point = p + &(Self::STEP_FROM_SHAPE * n);
-        let sh_ray = Ray::new(point, pl.norm());
+        let sh_ray = Ray::new(p.step_away(&n), pl.norm());
 
         let distance = match self.intersec_obj(&sh_ray) {
             None => f32::MAX,
