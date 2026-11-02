@@ -1,4 +1,7 @@
 /target
-Cargo.lock
 *.ppm
 .DS_Store
+/web/pkg/
+/node_modules/
+/review-output/
+/deploy/.env
