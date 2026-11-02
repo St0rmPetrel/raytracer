@@ -104,6 +104,7 @@ pub struct RasterImage {
     width: usize,
     height: usize,
     pixels: Vec<Color>,
+    samples: usize,
 }
 
 impl RasterImage {
@@ -114,6 +115,7 @@ impl RasterImage {
             height: cfg.height,
             name: cfg.name.clone(),
             pixels: vec![Color::new(0, 0, 0); cfg.width * cfg.height],
+            samples: cfg.samples,
         }
     }
 
@@ -140,9 +142,17 @@ impl RasterImage {
         Ok(())
     }
 
+    /// RGBA bytes for browser Canvas ImageData; no filesystem access.
+    pub fn rgba(&self) -> Vec<u8> {
+        self.pixels
+            .iter()
+            .flat_map(|c| [c.r, c.g, c.b, 255])
+            .collect()
+    }
+
     /// Return mutable pixel, you can change color of this pixel
     /// # Example
-    /// ```rust
+    /// ```ignore
     /// let p = image.get_pixel(0, 0).expect("pixel not found");
     /// p.set(&Color::new(255, 0, 0));
     /// ```
@@ -153,5 +163,8 @@ impl RasterImage {
     /// Return resolution width x height of the image
     pub fn get_resolution(&self) -> (usize, usize) {
         (self.width, self.height)
+    }
+    pub fn samples(&self) -> usize {
+        self.samples
     }
 }

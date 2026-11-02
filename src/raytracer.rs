@@ -1,4 +1,5 @@
 mod canvas;
+mod radiance;
 mod ray;
 mod scene;
 mod vector;
@@ -24,43 +25,55 @@ impl Raytracer {
         }
     }
 
+    pub(crate) fn into_rows(self, width: usize, height: usize, samples: usize) -> RowRenderer {
+        let resolution = width.max(height);
+        RowRenderer {
+            canvas: Canvas::new(self.camera, self.scene, resolution),
+            width,
+            x_shift: (resolution - width) / 2,
+            y_shift: (resolution - height) / 2,
+            samples,
+        }
+    }
+
     pub fn fill_image(self, image: &mut RasterImage) {
         let (width, height) = image.get_resolution();
-        let resolution = std::cmp::max(width, height);
-        let mut convas = Canvas::new(self.camera, self.scene, resolution + 1);
+        let mut renderer = self.into_rows(width, height, image.samples());
+        let rgba = renderer.render_rows(0, height);
+        for (index, pixel) in rgba.as_chunks::<4>().0.iter().enumerate() {
+            image
+                .get_pixel(index % width, index / width)
+                .unwrap()
+                .set(&crate::image::Color::new(pixel[0], pixel[1], pixel[2]));
+        }
+    }
+}
 
-        let (h_shift, w_shift) = if height < width {
-            ((resolution - height) / 2, 0)
-        } else {
-            (0, (resolution - width) / 2)
-        };
+pub(crate) struct RowRenderer {
+    canvas: Canvas,
+    width: usize,
+    x_shift: usize,
+    y_shift: usize,
+    samples: usize,
+}
 
-        // TODO make parallel
-        convas.fill_canvas(
-            (w_shift, resolution - w_shift + 1),
-            (h_shift, resolution - h_shift + 1),
+impl RowRenderer {
+    pub(crate) fn render_rows(&mut self, start: usize, end: usize) -> Vec<u8> {
+        self.canvas.fill_canvas(
+            (self.x_shift, self.x_shift + self.width),
+            (self.y_shift + start, self.y_shift + end),
+            self.samples,
         );
-
-        for j in 0..height {
-            for i in 0..width {
-                let pixel = image.get_pixel(i, j).expect("pixel in image not found");
-                let color_ul = convas
-                    .get_canvas_pixel(i + w_shift, j + h_shift)
-                    .expect("pixel in convas not found");
-                let color_ur = convas
-                    .get_canvas_pixel(i + w_shift + 1, j + h_shift)
-                    .expect("pixel in convas not found");
-                let color_bl = convas
-                    .get_canvas_pixel(i + w_shift, j + h_shift + 1)
-                    .expect("pixel in convas not found");
-                let color_br = convas
-                    .get_canvas_pixel(i + w_shift + 1, j + h_shift + 1)
-                    .expect("pixel in convas not found");
-                let color_u = color_ul + color_ur;
-                let color_b = color_bl + color_br;
-                let color = &color_b + &color_u;
-                pixel.set(&color);
+        let mut rgba = Vec::with_capacity((end - start) * self.width * 4);
+        for y in start..end {
+            for x in 0..self.width {
+                let color = self
+                    .canvas
+                    .get_canvas_pixel(x + self.x_shift, y + self.y_shift)
+                    .unwrap();
+                rgba.extend_from_slice(&[color.r, color.g, color.b, 255]);
             }
         }
+        rgba
     }
 }
