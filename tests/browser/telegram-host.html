@@ -1,0 +1,55 @@
+<html>
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #000;
+      color: white;
+      font: 16px system-ui;
+    }
+    header,
+    footer {
+      position: relative;
+      z-index: 10;
+      transform: translateZ(0);
+    }
+    header {
+      height: 72px;
+      display: grid;
+      place-content: center;
+      text-align: center;
+    }
+    small {
+      color: #888;
+    }
+    iframe {
+      display: block;
+      border: 0;
+      width: 100%;
+      height: calc(100dvh - 148px);
+    }
+    footer {
+      height: 76px;
+      padding: 10px 16px;
+      background: #1c1c1d;
+    }
+    button {
+      display: none;
+      width: 100%;
+      height: 52px;
+      border: 0;
+      border-radius: 12px;
+      background: #3e86fa;
+      color: #fff;
+      font: 600 17px system-ui;
+    }
+  </style>
+  <header><strong>Raytracer</strong><small>mini app · simulated host</small></header>
+  <iframe id="app" src="/"></iframe>
+  <footer><button id="native-render"></button></footer>
+</html>
