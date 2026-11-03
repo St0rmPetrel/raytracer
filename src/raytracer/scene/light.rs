@@ -1,24 +1,17 @@
-use crate::raytracer::vector::Vector;
+use crate::raytracer::{radiance::Radiance, vector::Vector};
 
-#[derive(Debug)]
 pub struct Light {
     orig: Vector,
+    power: f32,
+    color: Radiance,
 }
 
 impl Light {
-    pub fn new(orig: Vector) -> Light {
-        Light { orig }
+    pub fn new(orig: Vector, power: f32, color: Radiance) -> Self {
+        Self { orig, power, color }
     }
-
-    pub fn intensity(&self, intersec_point: &Vector, norm: &Vector) -> f32 {
-        let l = (&self.orig - intersec_point).norm();
-
-        let intensity = l.dot(norm);
-
-        if intensity <= 0.0 {
-            return 0.0;
-        }
-        intensity
+    pub fn incoming(&self, distance_squared: f32) -> Radiance {
+        self.color.scale(self.power / (1.0 + distance_squared))
     }
 
     pub fn get_orig(&self) -> &Vector {

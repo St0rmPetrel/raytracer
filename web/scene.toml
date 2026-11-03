@@ -1,0 +1,49 @@
+[image]
+name = "reflect"
+width = 1280
+height = 1280
+
+[camera]
+origin = [0.0, 0.0, 20.0]
+view = [0.0, 0.0, -1.0]
+up = [0.0, 1.0, 0.0]
+
+[[scene.lights]]
+origin = [0.0, 0.0, 5.0]
+
+[[scene.spheres]]
+center = [0.0, 3, 0.0]
+radius = 2.0
+  [scene.spheres.properties]
+  color = [255, 100, 100]
+  reflection = 0.5
+  diffuse = 0.2
+[[scene.lights]]
+origin = [0.0, -3, 5.0]
+
+[[scene.spheres]]
+center = [-2.598, -1.5, 0.0]
+radius = 2.0
+  [scene.spheres.properties]
+  color = [100, 255, 100]
+  reflection = 0.5
+  diffuse = 0.2
+[[scene.lights]]
+origin = [2.598, 1.5, 5.0]
+
+[[scene.spheres]]
+center = [2.598, -1.5, 0.0]
+radius = 2.0
+  [scene.spheres.properties]
+  color = [100, 100, 255]
+  reflection = 0.5
+  diffuse = 0.2
+[[scene.lights]]
+origin = [-2.598, 1.5, 5.0]
+
+[[scene.spheres]]
+center = [0.0, 0.0, -100001.0]
+radius = 100000.0
+  [scene.spheres.properties]
+  color = [200, 200, 200]
+  diffuse = 0.4

@@ -11,10 +11,7 @@ impl Ray {
     }
 
     pub fn new_reflect(&self, p: &Vector, n: &Vector) -> Option<Ray> {
-        let d = match self.get_dir().reflect(n) {
-            None => return None,
-            Some(d) => d,
-        };
+        let d = self.get_dir().reflect(n)?;
         Some(Ray {
             orig: p.clone(),
             dir: d,

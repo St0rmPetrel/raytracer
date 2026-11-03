@@ -1,0 +1,43 @@
+name: raytracer
+
+services:
+  raytracer:
+    image: ${RAYTRACER_IMAGE:?Set RAYTRACER_IMAGE to the loaded commit-tagged image}
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 128
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    networks:
+      - proxy
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: coolify
+      traefik.http.services.raytracer.loadbalancer.server.port: "8080"
+      traefik.http.routers.raytracer-http.rule: Host(`${RAYTRACER_DOMAIN:?Set RAYTRACER_DOMAIN to your app domain}`)
+      traefik.http.routers.raytracer-http.entrypoints: http
+      traefik.http.routers.raytracer-http.service: raytracer
+      traefik.http.routers.raytracer-http.middlewares: raytracer-https
+      traefik.http.middlewares.raytracer-https.redirectscheme.scheme: https
+      traefik.http.middlewares.raytracer-https.redirectscheme.permanent: "true"
+      traefik.http.routers.raytracer.rule: Host(`${RAYTRACER_DOMAIN:?Set RAYTRACER_DOMAIN to your app domain}`)
+      traefik.http.routers.raytracer.entrypoints: https
+      traefik.http.routers.raytracer.service: raytracer
+      traefik.http.routers.raytracer.tls: "true"
+      traefik.http.routers.raytracer.tls.certresolver: letsencrypt
+
+networks:
+  proxy:
+    external: true
+    name: coolify

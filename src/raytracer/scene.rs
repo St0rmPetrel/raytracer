@@ -1,5 +1,5 @@
 use crate::config::{ObjProperties, SceneConfig};
-use crate::image::Color;
+use crate::raytracer::radiance::Radiance;
 use crate::raytracer::ray::Ray;
 use crate::raytracer::vector::Vector;
 
@@ -9,21 +9,25 @@ mod shape;
 use light::Light;
 use shape::Shape;
 
-pub struct Object {
+struct Object {
     shape: Box<dyn Shape>,
     properties: Properties,
 }
 
-pub struct Properties {
-    pub color: Color,
-    pub diffuse: Option<f32>,
-    pub reflection: Option<f32>,
+struct Properties {
+    color: Radiance,
+    checker: Option<Radiance>,
+    checker_scale: f32,
+    diffuse: Option<f32>,
+    reflection: Option<f32>,
 }
 
 impl Properties {
     fn new(cfg: &ObjProperties) -> Properties {
         Properties {
-            color: Color::new_from_arr(&cfg.color),
+            color: Radiance::from_rgb(cfg.color),
+            checker: cfg.checker.map(Radiance::from_rgb),
+            checker_scale: cfg.checker_scale.unwrap_or(1.0),
             diffuse: cfg.diffuse,
             reflection: cfg.reflection,
         }
@@ -33,6 +37,10 @@ impl Properties {
 pub struct Scene {
     objects: Vec<Object>,
     lights: Vec<Light>,
+    exposure: f32,
+    ambient: f32,
+    background: Radiance,
+    horizon: Radiance,
 }
 
 impl Scene {
@@ -40,6 +48,12 @@ impl Scene {
         let mut scene = Scene {
             objects: Vec::new(),
             lights: Vec::new(),
+            exposure: cfg.exposure,
+            ambient: cfg.ambient,
+            background: Radiance::from_rgb(cfg.background),
+            horizon: cfg.horizon.map(Radiance::from_rgb).unwrap_or_else(|| {
+                Radiance::from_rgb(cfg.background).mix(Radiance::from_rgb([95, 130, 190]), 0.75)
+            }),
         };
         // objects
         for s in cfg.spheres.iter() {
@@ -51,7 +65,11 @@ impl Scene {
 
         // light
         for l in cfg.lights.iter() {
-            let light = Light::new(Vector::new_from_arr(&l.origin));
+            let light = Light::new(
+                Vector::new_from_arr(&l.origin),
+                l.power,
+                Radiance::from_rgb(l.color),
+            );
             scene.push_light(light);
         }
 
@@ -69,68 +87,70 @@ impl Scene {
         self.lights.push(light)
     }
 
-    const REFLECT_DEEP: u8 = 5;
+    const MAX_REFLECTION_DEPTH: u8 = 5;
 
-    pub fn get_ray_color(&self, ray: &Ray, deep: u8) -> Color {
-        let mut c = Color::new(0, 0, 0);
-        for l in self.lights.iter() {
-            let ray_color_by_l = self.get_ray_color_by_light(ray, &l, deep);
-            c = &c + &ray_color_by_l;
-        }
-        c
+    pub fn exposure(&self) -> f32 {
+        self.exposure
     }
 
-    fn get_rlf_ray(ray: &Ray, p: &Vector, n: &Vector, deep: u8) -> Option<Ray> {
-        if deep >= Self::REFLECT_DEEP {
-            return None;
-        }
-
-        ray.new_reflect(&p.step_away(&n), n)
+    fn environment(&self, direction: &Vector) -> Radiance {
+        let elevation = direction.dot(&Vector::new(0.0, 1.0, 0.0));
+        self.horizon.mix(self.background, elevation.max(0.0).sqrt())
     }
 
-    fn is_shadow(&self, l: &Light, p: &Vector, n: &Vector) -> bool {
-        let pl = l.get_orig() - p;
-        let pl_size = pl.size();
-
-        let sh_ray = Ray::new(p.step_away(&n), pl.norm());
-
-        let distance = match self.intersec_obj(&sh_ray) {
-            None => f32::MAX,
-            Some(intersec) => intersec.distance,
+    pub fn get_ray_color(&self, ray: &Ray, depth: u8) -> Radiance {
+        let Some(hit) = self.intersec(ray) else {
+            return self.environment(ray.get_dir());
         };
-
-        distance <= pl_size
-    }
-
-    fn get_ray_color_by_light(&self, ray: &Ray, l: &Light, deep: u8) -> Color {
-        let intersec = match self.intersec(ray) {
-            None => return Color::new(0, 0, 0),
-            Some(intersec) => intersec,
+        let properties = hit.obj_properties;
+        let normal = match properties.diffuse {
+            Some(diff) if diff > 0.0 => (&hit.norm + &(&Vector::new_rand() * diff)).norm(),
+            _ => hit.norm.clone(),
         };
-        let norm = match intersec.obj_properties.diffuse {
-            None => intersec.norm,
-            Some(diff) => (&intersec.norm + &(&Vector::new_rand() * diff)).norm(),
-        };
-        let rfl_handler = |c: Color| match intersec.obj_properties.reflection {
-            None => c,
-            Some(rfl) => {
-                let rfl_ray = match Self::get_rlf_ray(ray, &intersec.point, &norm, deep) {
-                    None => return c,
-                    Some(r) => r,
-                };
-                c.add_refl(rfl, self.get_ray_color(&rfl_ray, deep + 1))
+        let mut albedo = properties.color;
+        if let Some(checker) = properties.checker {
+            let x = hit.point.dot(&Vector::new(1.0, 0.0, 0.0)) / properties.checker_scale;
+            let z = hit.point.dot(&Vector::new(0.0, 0.0, 1.0)) / properties.checker_scale;
+            if (x.floor() + z.floor()).rem_euclid(2.0) >= 1.0 {
+                albedo = checker;
             }
-        };
-
-        // shadow
-        if self.is_shadow(l, &intersec.point, &norm) {
-            return rfl_handler(Color::new(0, 0, 0));
         }
+        let mut diffuse = self.environment(&hit.norm).tint(albedo).scale(self.ambient);
+        let mut specular = Radiance::default();
+        for light in &self.lights {
+            let to_light = light.get_orig() - &hit.point;
+            let distance_squared = to_light.dot2().max(0.01);
+            let direction = to_light.norm();
+            let cosine = normal.dot(&direction).max(0.0);
+            if cosine <= 0.0 || self.is_shadow(light, &hit.point, &hit.norm) {
+                continue;
+            }
+            let incoming = light.incoming(distance_squared);
+            diffuse = diffuse.add(incoming.tint(albedo).scale(cosine));
+            let half = (&direction - ray.get_dir()).norm();
+            let gloss = 96.0 / (1.0 + properties.diffuse.unwrap_or(0.0) * 30.0);
+            specular = specular.add(incoming.scale(normal.dot(&half).max(0.0).powf(gloss) * 0.45));
+        }
+        let reflection = properties.reflection.unwrap_or(0.0);
+        let mut result = diffuse;
+        if reflection > 0.0 && depth < Self::MAX_REFLECTION_DEPTH {
+            if let Some(reflected) = ray.new_reflect(&hit.point.step_away(&hit.norm), &normal) {
+                let cosine = (-ray.get_dir().dot(&normal)).clamp(0.0, 1.0);
+                let fresnel = reflection + (1.0 - reflection) * (1.0 - cosine).powi(5);
+                // Trace reflection once per hit, independent of the number of lights.
+                result = result.mix(self.get_ray_color(&reflected, depth + 1), fresnel);
+            }
+        }
+        result.add(specular)
+    }
 
-        let dist_from_l = (&intersec.point - l.get_orig()).size();
-        let l_intens = l.intensity(&intersec.point, &norm) / (dist_from_l);
-
-        rfl_handler(l_intens * intersec.obj_properties.color.clone())
+    fn is_shadow(&self, light: &Light, point: &Vector, normal: &Vector) -> bool {
+        let offset = point.step_away(normal);
+        let to_light = light.get_orig() - &offset;
+        let distance = to_light.size();
+        let ray = Ray::new(offset, to_light.norm());
+        self.intersec_obj(&ray)
+            .is_some_and(|hit| hit.distance < distance)
     }
 }
 
@@ -153,12 +173,12 @@ impl<'a> Intersection<'a> {
 }
 
 struct IntersecObj<'a> {
-    pub obj: &'a Object,
-    pub distance: f32,
+    obj: &'a Object,
+    distance: f32,
 }
 
 impl Scene {
-    fn intersec_obj(&self, ray: &Ray) -> Option<IntersecObj> {
+    fn intersec_obj(&self, ray: &Ray) -> Option<IntersecObj<'_>> {
         let mut nearest_obj = None;
         for obj in self.objects.iter() {
             let distance = match obj.shape.intersec(ray).get_closer() {
@@ -180,10 +200,8 @@ impl Scene {
         nearest_obj
     }
 
-    fn intersec(&self, ray: &Ray) -> Option<Intersection> {
-        match self.intersec_obj(ray) {
-            None => None,
-            Some(obj) => Some(Intersection::new(obj, ray)),
-        }
+    fn intersec(&self, ray: &Ray) -> Option<Intersection<'_>> {
+        self.intersec_obj(ray)
+            .map(|obj| Intersection::new(obj, ray))
     }
 }

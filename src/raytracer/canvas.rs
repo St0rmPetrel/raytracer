@@ -1,5 +1,6 @@
 use crate::config::CameraConfig;
 use crate::image::Color;
+use crate::raytracer::radiance::Radiance;
 use crate::raytracer::ray::Ray;
 use crate::raytracer::scene::Scene;
 use crate::raytracer::vector::Vector;
@@ -50,11 +51,16 @@ impl Canvas {
         self.canvas.get(index)
     }
 
-    pub fn fill_canvas(&mut self, i_bound: (usize, usize), j_bound: (usize, usize)) {
+    pub fn fill_canvas(
+        &mut self,
+        i_bound: (usize, usize),
+        j_bound: (usize, usize),
+        samples: usize,
+    ) {
+        let grid = (samples.clamp(1, 16) as f32).sqrt().ceil() as usize;
         for j in j_bound.0..j_bound.1 {
             for i in i_bound.0..i_bound.1 {
-                let ray = self.get_ray(i, j);
-                let ray_color = self.scene.get_ray_color(&ray, 0);
+                let ray_color = self.render_pixel(i, j, grid);
                 let pixel = match self.get_canvas_pixel_mut(i, j) {
                     Some(pixel) => pixel,
                     None => continue,
@@ -64,15 +70,34 @@ impl Canvas {
         }
     }
 
+    /// Average subpixel samples in linear light, then apply exposure and tone mapping.
+    fn render_pixel(&self, i: usize, j: usize, grid: usize) -> Color {
+        let mut radiance = Radiance::default();
+        for sy in 0..grid {
+            for sx in 0..grid {
+                let ray = self.get_ray(
+                    i,
+                    j,
+                    (sx as f32 + 0.5) / grid as f32,
+                    (sy as f32 + 0.5) / grid as f32,
+                );
+                radiance = radiance.add(self.scene.get_ray_color(&ray, 0));
+            }
+        }
+        radiance
+            .scale(1.0 / (grid * grid) as f32)
+            .display(self.scene.exposure())
+    }
+
     fn get_canvas_pixel_mut(&mut self, i: usize, j: usize) -> Option<&mut Color> {
         let index = self.resolution * j + i;
         self.canvas.get_mut(index)
     }
 
-    fn get_ray(&self, i: usize, j: usize) -> Ray {
+    fn get_ray(&self, i: usize, j: usize, x: f32, y: f32) -> Ray {
         let mut dir = self.camera.view.clone();
-        let h_shift = -0.5 + (i as f32 * self.step + self.step * 0.5);
-        let v_shift = 0.5 - (j as f32 * self.step + self.step * 0.5);
+        let h_shift = -0.5 + (i as f32 + x) * self.step;
+        let v_shift = 0.5 - (j as f32 + y) * self.step;
 
         dir += &(&self.camera.tau * h_shift);
         dir += &(&self.camera.up * v_shift);

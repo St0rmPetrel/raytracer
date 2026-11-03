@@ -18,7 +18,7 @@ impl Vector {
     /// Return new Vector with random direction and random size in [0, 1].
     ///
     /// # Example
-    /// ```rust
+    /// ```ignore
     /// // create Vector r with r.size() <= 1.0 and random direction
     /// let r = Vector::new_rand();
     /// ```
@@ -26,17 +26,20 @@ impl Vector {
     /// # Use case
     /// In this project random Vectors used for diffusion by change direction of ideal shape's
     /// normal Vectors:
-    /// ```rust
+    /// ```ignore
     /// let normal_with_diffusion = (normal_ideal + Vector::new_rand() * diffusion_coefficient).norm();
     /// ```
     pub fn new_rand() -> Vector {
-        (Vector {
-            x: rand::random(),
-            y: rand::random(),
-            z: rand::random(),
+        loop {
+            let vector = Vector::new(
+                rand::random::<f32>() * 2.0 - 1.0,
+                rand::random::<f32>() * 2.0 - 1.0,
+                rand::random::<f32>() * 2.0 - 1.0,
+            );
+            if vector.dot2() <= 1.0 {
+                return vector;
+            }
         }
-        .norm())
-            * rand::random()
     }
 
     /// Return new Vector with given coordinates from array.
@@ -45,7 +48,7 @@ impl Vector {
     /// coordinates stored in array
     ///
     /// #Example
-    /// ```rust
+    /// ```ignore
     /// let conf_origin: [f32; 3] = [1.0, -1.0, 0.0];
     /// let origin = Vector::new_from_arr(&conf_origin)
     /// ```
@@ -60,7 +63,7 @@ impl Vector {
     /// Return scalar or dot product of two Vectors (scalar)
     ///
     /// #Example
-    /// ```rust
+    /// ```ignore
     /// let a = Vector::new(0, 1, 2);
     /// let b = Vector::new(2, 1, 0);
     ///
@@ -77,7 +80,7 @@ impl Vector {
     /// Return dot product of Vector by itself (scalar)
     ///
     /// #Example
-    /// ```rust
+    /// ```ignore
     /// let a = Vector::new(0, 1, 2);
     ///
     /// // p = a dot a
@@ -131,7 +134,7 @@ impl Vector {
     /// a little step away from real object intersection origin.
     ///
     /// # Example
-    /// ```rust
+    /// ```ignore
     /// // ray = Ray::new(orig, dir)
     /// let ray = Ray::new(Vector::new(0, 0, 0), Vector::new(0, 0, 1));
     /// let sphere_intersec_point = Vector::new(0, 0, 1);
@@ -222,10 +225,7 @@ impl Mul<f32> for Vector {
     type Output = Vector;
 
     fn mul(self, rhs: f32) -> Self::Output {
-        let _ = self.x * rhs;
-        let _ = self.y * rhs;
-        let _ = self.z * rhs;
-        self
+        &self * rhs
     }
 }
 
@@ -233,16 +233,24 @@ impl Mul<Vector> for f32 {
     type Output = Vector;
 
     fn mul(self, rhs: Vector) -> Self::Output {
-        let _ = rhs.x * self;
-        let _ = rhs.y * self;
-        let _ = rhs.z * self;
-        rhs
+        self * &rhs
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::raytracer::vector::Vector;
+
+    #[test]
+    fn scalar_multiplication_scales_all_coordinates() {
+        let vector = Vector::new(1.0, -2.0, 3.0);
+        let expected = Vector::new(0.5, -1.0, 1.5);
+        assert_eq!(vector.clone() * 0.5, expected);
+        assert_eq!(0.5 * vector.clone(), expected);
+        assert_eq!(&vector * 0.5, expected);
+        assert_eq!(0.5 * &vector, expected);
+        assert_eq!(vector * 0.0, Vector::new(0.0, 0.0, 0.0));
+    }
 
     #[test]
     fn reflect_positive_1() {

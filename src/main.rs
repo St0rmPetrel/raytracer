@@ -1,6 +1,4 @@
-pub mod config;
-pub mod image;
-pub mod raytracer;
+use ::raytracer::{config, image, raytracer as renderer};
 
 use std::process::ExitCode;
 
@@ -15,7 +13,7 @@ fn main() -> ExitCode {
     let config_str = match std::fs::read_to_string(config_path) {
         Ok(str) => str,
         Err(err) => {
-            println!("fail to read file {}: {}", config_path, err.to_string());
+            println!("fail to read file {}: {}", config_path, err);
             return ExitCode::FAILURE;
         }
     };
@@ -30,14 +28,14 @@ fn main() -> ExitCode {
 
     let mut image = image::RasterImage::new(cfg.image);
 
-    raytracer::Raytracer::new(cfg.camera, cfg.scene).fill_image(&mut image);
+    renderer::Raytracer::new(cfg.camera, cfg.scene).fill_image(&mut image);
 
     match image.save_ppm() {
         Ok(_) => {
             println!("ppm image successful save");
         }
         Err(err) => {
-            println!("fail to read file {}: {}", config_path, err.to_string());
+            println!("fail to save image for {}: {}", config_path, err);
             return ExitCode::FAILURE;
         }
     }

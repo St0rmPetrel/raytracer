@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Rust Raytracer — on your device</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: system-ui, sans-serif;
+        background: var(--tg-theme-bg-color, #10151f);
+        color: var(--tg-theme-text-color, #edf1fa);
+      }
+      body {
+        margin: 0;
+      }
+      main {
+        max-width: 900px;
+        margin: auto;
+        padding: calc(24px + var(--tg-content-safe-area-inset-top, 0px))
+          max(16px, var(--tg-content-safe-area-inset-right, 0px))
+          calc(
+            110px +
+              max(env(safe-area-inset-bottom, 0px), var(--tg-content-safe-area-inset-bottom, 0px))
+          )
+          max(16px, var(--tg-content-safe-area-inset-left, 0px));
+      }
+      h1 {
+        font-size: clamp(24px, 5vw, 40px);
+        margin-bottom: 8px;
+      }
+      p {
+        color: var(--tg-theme-hint-color, #abb8d0);
+        line-height: 1.6;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        max-width: 512px;
+        aspect-ratio: 1;
+        background: #080b11;
+        border-radius: 16px;
+        margin: 24px auto;
+      }
+      textarea {
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 220px;
+        background: var(--tg-theme-secondary-bg-color, #192231);
+        color: var(--tg-theme-text-color, #edf1fa);
+        border: 1px solid #344157;
+        border-radius: 12px;
+        padding: 14px;
+        font: 16px monospace;
+      }
+      button,
+      select {
+        font: inherit;
+        min-height: 44px;
+        padding: 12px 18px;
+        border-radius: 10px;
+        border: 1px solid #344157;
+        background: var(--tg-theme-secondary-bg-color, #192231);
+        color: var(--tg-theme-text-color, #edf1fa);
+      }
+      button {
+        background: var(--tg-theme-button-color, #8ac8ff);
+        color: var(--tg-theme-button-text-color, #102033);
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: wait;
+      }
+      summary {
+        cursor: pointer;
+        padding: 12px 0;
+      }
+      textarea {
+        margin-top: 8px;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+      }
+      #status {
+        min-height: 3em;
+      }
+      .panel {
+        background: var(--tg-theme-secondary-bg-color, #192231);
+        border: 1px solid #344157;
+        border-radius: 16px;
+        padding: 16px;
+        margin: 16px 0;
+      }
+      fieldset {
+        border: 0;
+        margin: 0;
+        padding: 0;
+        min-width: 0;
+      }
+      fieldset:disabled {
+        opacity: 0.5;
+      }
+      #preset {
+        width: 100%;
+        margin-bottom: 16px;
+      }
+      .object-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+      }
+      .object-row label {
+        margin: 0;
+      }
+      .object-row select {
+        flex: 1;
+        min-width: 100px;
+      }
+      .secondary {
+        background: transparent;
+        color: inherit;
+        padding: 8px 12px;
+      }
+      .sliders {
+        display: grid;
+        gap: 16px;
+        margin: 16px 0;
+      }
+      .slider {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 4px;
+        margin: 0;
+      }
+      .slider input {
+        grid-column: 1/-1;
+        width: 100%;
+        height: 36px;
+        margin: 0;
+        accent-color: var(--tg-theme-button-color, #8ac8ff);
+      }
+      output {
+        font-variant-numeric: tabular-nums;
+        color: var(--tg-theme-hint-color, #abb8d0);
+      }
+      .color-row,
+      .check {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 44px;
+      }
+      .check {
+        justify-content: flex-start;
+        margin: 8px 0;
+      }
+      .check input {
+        width: 22px;
+        height: 22px;
+        accent-color: var(--tg-theme-button-color, #8ac8ff);
+      }
+      input[type='color'] {
+        width: 64px;
+        height: 44px;
+        border: 0;
+        background: transparent;
+        padding: 0;
+      }
+      .hint {
+        font-size: 13px;
+        margin: 4px 0;
+      }
+      .preview-panel {
+        position: sticky;
+        top: var(--tg-content-safe-area-inset-top, 0px);
+        z-index: 2;
+        background: var(--tg-theme-bg-color, #10151f);
+        padding: 8px 0 16px;
+        margin-bottom: 16px;
+        transform: translateZ(0);
+      }
+      .preview-panel canvas {
+        width: min(100%, 32svh);
+        height: auto;
+        margin: 8px auto;
+      }
+      @media (min-width: 650px) {
+        .preview-panel {
+          position: static;
+        }
+        .preview-panel canvas {
+          width: 100%;
+        }
+      }
+      #open-preview {
+        display: block;
+        width: 100%;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        cursor: zoom-in;
+      }
+      #open-preview:focus-visible {
+        outline: 3px solid var(--tg-theme-button-color, #8ac8ff);
+        outline-offset: 3px;
+      }
+      .preview-hint {
+        text-align: center;
+        font-size: 12px;
+        margin: 4px 0 8px;
+      }
+      #image-viewer {
+        box-sizing: border-box;
+        width: 100vw;
+        height: 100dvh;
+        max-width: none;
+        max-height: none;
+        margin: 0;
+        padding: 16px;
+        padding-top: max(16px, env(safe-area-inset-top));
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+        border: 0;
+        background: #080d18;
+        color: #edf1fa;
+      }
+      #image-viewer[open] {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        gap: 12px;
+      }
+      #image-viewer::backdrop {
+        background: #080d18;
+      }
+      .viewer-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .viewer-header h2 {
+        font-size: 18px;
+        margin: 0;
+      }
+      #close-preview {
+        flex-shrink: 0;
+        background: #243149;
+        color: #edf1fa;
+      }
+      #viewer-frame {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 0;
+        cursor: zoom-out;
+      }
+      #image-viewer canvas {
+        width: min(calc(100vw - 32px), calc(100dvh - 230px));
+        height: auto;
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        aspect-ratio: 1;
+        margin: 0;
+        cursor: default;
+        border-radius: 8px;
+      }
+      #viewer-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+      }
+      #viewer-footer #status {
+        margin: 8px 0 0;
+        min-height: 3em;
+        font-size: 13px;
+        text-align: center;
+        color: #abb8d0;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      #render-settings h2 {
+        font-size: 18px;
+        margin: 0 0 20px;
+      }
+      .render-options {
+        display: grid;
+        gap: 12px;
+      }
+      .render-options label {
+        margin: 0;
+      }
+      .render-options select {
+        width: 100%;
+        margin-bottom: 8px;
+        min-width: 0;
+      }
+      #action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 3;
+        background: var(--tg-theme-bg-color, #10151f);
+        border-top: 1px solid #344157;
+        padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+      }
+      #action-bar button {
+        display: block;
+        width: 100%;
+        max-width: 900px;
+        min-height: 52px;
+        margin: 0 auto;
+      }
+      .rendering #render {
+        display: none;
+      }
+      .telegram-native #render,
+      .telegram-native #cancel,
+      .telegram-native #action-bar {
+        display: none;
+      }
+      .telegram-native main {
+        padding-bottom: calc(24px + var(--tg-content-safe-area-inset-bottom, 0px));
+      }
+      .telegram-native #image-viewer canvas {
+        width: min(calc(100vw - 32px), calc(100dvh - 170px));
+      }
+      @media (min-width: 650px) {
+        .render-options {
+          grid-template-columns: 1fr 2fr;
+          align-items: center;
+        }
+        .render-options select {
+          margin: 0;
+        }
+      }
+      @media (min-width: 650px) {
+        .sliders {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Миры из сфер.</h1>
+      <p>Выбери готовую сцену, меняй сферы и свет — и собери свой мир.</p>
+      <div class="preview-panel">
+        <button
+          id="open-preview"
+          type="button"
+          aria-label="Развернуть изображение на весь экран"
+          aria-haspopup="dialog"
+        >
+          <canvas id="scene-canvas" width="256" height="256" aria-label="Превью сцены"></canvas>
+        </button>
+        <p class="preview-hint">Нажми на картинку, чтобы развернуть</p>
+      </div>
+      <section class="panel" aria-label="Редактор сцены">
+        <fieldset id="visual-controls">
+          <label for="preset">Начни с готовой сцены</label>
+          <select id="preset" aria-describedby="preset-description"></select>
+          <p id="preset-description" class="hint"></p>
+          <div class="object-row">
+            <label for="object">Объект</label
+            ><select id="object"></select>
+            <button id="add-object" type="button" class="secondary">＋ Добавить</button
+            ><button id="remove-object" type="button" class="secondary">Удалить</button>
+          </div>
+          <label class="color-row" for="color"
+            >Цвет сферы<input id="color" type="color" data-object="color"
+          /></label>
+          <div class="sliders">
+            <label class="slider" for="x"
+              ><span>X · влево / вправо</span><output for="x"></output
+              ><input id="x" type="range" min="-6" max="6" step="0.1" data-object="x" /></label
+            ><label class="slider" for="y"
+              ><span>Y · вверх / вниз</span><output for="y"></output
+              ><input id="y" type="range" min="-6" max="6" step="0.1" data-object="y" /></label
+            ><label class="slider" for="z"
+              ><span>Z · ближе / дальше</span><output for="z"></output
+              ><input id="z" type="range" min="-6" max="6" step="0.1" data-object="z" /></label
+            ><label class="slider" for="radius"
+              ><span>Размер</span><output for="radius"></output
+              ><input
+                id="radius"
+                type="range"
+                min="0.3"
+                max="3"
+                step="0.1"
+                data-object="radius" /></label
+            ><label class="slider" for="reflection"
+              ><span>Отражение</span><output for="reflection"></output
+              ><input
+                id="reflection"
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                data-object="reflection" /></label
+            ><label class="slider" for="diffuse"
+              ><span>Рассеивание</span><output for="diffuse"></output
+              ><input id="diffuse" type="range" min="0" max="0.8" step="0.05" data-object="diffuse"
+            /></label>
+          </div>
+          <details>
+            <summary>Камера и свет</summary>
+            <div class="sliders">
+              <label class="slider" for="camera-angle"
+                ><span>Поворот камеры</span><output for="camera-angle"></output
+                ><input
+                  id="camera-angle"
+                  type="range"
+                  min="-160"
+                  max="160"
+                  step="5"
+                  data-scene="cameraAngle" /></label
+              ><label class="slider" for="camera-height"
+                ><span>Наклон камеры</span><output for="camera-height"></output
+                ><input
+                  id="camera-height"
+                  type="range"
+                  min="-45"
+                  max="60"
+                  step="1"
+                  data-scene="cameraHeight" /></label
+              ><label class="slider" for="camera-distance"
+                ><span>Расстояние</span><output for="camera-distance"></output
+                ><input
+                  id="camera-distance"
+                  type="range"
+                  min="12"
+                  max="35"
+                  step="0.5"
+                  data-scene="cameraDistance" /></label
+              ><label class="slider" for="light-angle"
+                ><span>Направление света</span><output for="light-angle"></output
+                ><input
+                  id="light-angle"
+                  type="range"
+                  min="-180"
+                  max="180"
+                  step="5"
+                  data-scene="lightAngle" /></label
+              ><label class="slider" for="light-height"
+                ><span>Высота света</span><output for="light-height"></output
+                ><input
+                  id="light-height"
+                  type="range"
+                  min="1"
+                  max="12"
+                  step="0.5"
+                  data-scene="lightHeight"
+              /></label>
+            </div>
+            <div class="sliders">
+              <label class="slider" for="light-power"
+                ><span>Мощность основного света</span><output for="light-power"></output
+                ><input
+                  id="light-power"
+                  type="range"
+                  min="0"
+                  max="250"
+                  step="5"
+                  data-scene="lightPower" /></label
+              ><label class="slider" for="exposure"
+                ><span>Экспозиция</span><output for="exposure"></output
+                ><input
+                  id="exposure"
+                  type="range"
+                  min="0.3"
+                  max="4"
+                  step="0.1"
+                  data-scene="exposure"
+              /></label>
+            </div>
+            <label class="check"><input type="checkbox" data-scene="floor" />Пол</label>
+            <label class="color-row">Цвет пола<input type="color" data-scene="floorColor" /></label>
+          </details>
+        </fieldset>
+        <label class="check"
+          ><input id="live-preview" type="checkbox" checked />Автопревью при изменениях</label
+        >
+        <p class="hint">
+          Автопревью — до 128×128, 1 луч на пиксель. Для деталей нажми «Перерисовать».
+        </p>
+      </section>
+      <section id="render-settings" class="panel" aria-label="Настройки рендера">
+        <h2>Качество рендера</h2>
+        <div class="render-options">
+          <label for="size">Итоговое разрешение</label>
+          <select id="size">
+            <option value="128">128 × 128</option>
+            <option value="256">256 × 256</option>
+            <option value="512">512 × 512</option>
+            <option value="1024" selected>1024 × 1024</option>
+          </select>
+          <label for="quality">Сглаживание</label
+          ><select id="quality">
+            <option value="1">Быстро · 1 луч/пиксель</option>
+            <option value="4">Баланс · 4 луча/пиксель</option>
+            <option value="16" selected>Детально · 16 лучей/пиксель</option>
+          </select>
+        </div>
+      </section>
+      <details class="panel">
+        <summary>Для продвинутых · TOML</summary>
+        <label class="check"
+          ><input id="manual-toml" type="checkbox" />Редактировать TOML вручную</label
+        >
+        <p class="hint">
+          В ручном режиме ползунки отключены. При возврате к ним ручные изменения заменятся
+          настройками визуального редактора.
+        </p>
+        <label for="scene">Конфигурация сцены</label
+        ><textarea id="scene" spellcheck="false" readonly></textarea>
+      </details>
+
+      <p id="status" role="status">Готовим сцену…</p>
+      <div id="action-bar">
+        <button id="render" disabled>Перерисовать</button
+        ><button id="cancel" hidden>Отменить</button>
+      </div>
+    </main>
+    <dialog id="image-viewer" aria-labelledby="viewer-title">
+      <div class="viewer-header">
+        <h2 id="viewer-title">Просмотр сцены</h2>
+        <button id="close-preview" type="button" autofocus aria-label="Закрыть просмотр">
+          ✕ Закрыть
+        </button>
+      </div>
+      <div id="viewer-frame"></div>
+      <div id="viewer-footer"><div id="viewer-actions"></div></div>
+    </dialog>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
